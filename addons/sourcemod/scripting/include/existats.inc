@@ -19,10 +19,11 @@ enum ExiStatsDB_Type
 /**
  *	Called when plugin started and database connected
  *
+ *	@param db	Database handle
  *	@param type	Database type (mysql or sql)
  *
  */
-forward void ExiStats_OnDBConnected(ExiStatsDB_Type type);
+forward void ExiStats_OnDBConnected(Database db, ExiStatsDB_Type type);
 
 /**
  *	Called when the connection error to the database and retry the connection
