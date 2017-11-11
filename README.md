@@ -1,1 +1,1 @@
-Statistics For Servers
+Статистика для сервера
