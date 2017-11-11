@@ -1,2 +1,2 @@
 ## ExiStats
-Статистика для сервера
+Statistics for server
