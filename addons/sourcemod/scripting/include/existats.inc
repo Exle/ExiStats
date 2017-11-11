@@ -98,15 +98,17 @@ public __pl_existats_SetNTVOptional()
 	MarkNativeAsOptional("ExiStats_Message");
 	MarkNativeAsOptional("ExiStats_MessageAll");
 
-	MarkNativeAsOptional("ExiStats_GetClientId");
-	MarkNativeAsOptional("ExiStats_GetClientAuth");
-
 	MarkNativeAsOptional("ExiStats_GetClientById");
 	MarkNativeAsOptional("ExiStats_GetClientByAuth");
 
 	MarkNativeAsOptional("ExiStats_SetClientExperience");
 	MarkNativeAsOptional("ExiStats_SetClientGameTime");
 	MarkNativeAsOptional("ExiStats_SetClientLastVisit");
+
+	MarkNativeAsOptional("ExiStats_GetClientId");
+
+	MarkNativeAsOptional("ExiStats_GetClientAuth");
+	MarkNativeAsOptional("ExiStats_GetClientName");
 
 	MarkNativeAsOptional("ExiStats_GetClientExperience");
 	MarkNativeAsOptional("ExiStats_GetClientGameTime");
