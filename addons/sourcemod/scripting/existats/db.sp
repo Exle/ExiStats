@@ -11,16 +11,15 @@ ExiStatsDB_Type ExiDB_type;
 #define INSERTPLAYER			"INSERT INTO es_players (name, auth, lastvisit) VALUES ('%s', '%s', %d);"
 
 #define UPDATEPLAYERVALUE		"UPDATE es_players SET '%s' = %d WHERE id = %d;"
-#define UPDATEALLPLAYERVALUE	"UPDATE es_players SET exp = %d, time = %d, lastvisit = %d WHERE id = %d;"
+#define UPDATEPLAYERSTRING		"UPDATE es_players SET '%s' = '%s' WHERE id = %d;"
+#define UPDATEALLPLAYERVALUE	"UPDATE es_players SET name = '%s', exp = %d, time = %d, lastvisit = %d WHERE id = %d;"
 
 #define MYSQL				(ExiDB_type == ESDB_MySQL)
 
-Handle	ExiForward_OnDBConnected,
-		ExiForward_OnDBReConnect;
+Handle	ExiForward_OnDBReConnect;
 
 void ExiDB_OnPluginStart()
 {
-	ExiForward_OnDBConnected	= CreateGlobalForward("ExiStats_OnDBConnected",	ET_Ignore, Param_Cell);
 	ExiForward_OnDBReConnect	= CreateGlobalForward("ExiStats_OnDBReConnect",	ET_Ignore);
 
 	ExiDB_PreConnect();
@@ -28,7 +27,6 @@ void ExiDB_OnPluginStart()
 
 void ExiDB_OnPluginEnd()
 {
-	delete ExiForward_OnDBConnected;
 	delete ExiForward_OnDBReConnect;
 }
 
@@ -109,11 +107,25 @@ public void ExiDB_Table(Database db, DBResultSet results, const char[] error, an
 		return;
 	}
 
-	Call_StartForward(ExiForward_OnDBConnected);
-	Call_PushCell(ExiDB_type);
-	Call_Finish();
-
 	Exi_State();
+
+	Handle ExiVar_MyHandle = GetMyHandle();
+	Handle ExiVar_Iterator = GetPluginIterator();
+	Handle ExiVar_Plugin;
+	Function ExiVar_Function;
+
+	while (MorePlugins(ExiVar_Iterator))
+	{
+		if ((ExiVar_Plugin = ReadPlugin(ExiVar_Iterator)) != null && ExiVar_Plugin != ExiVar_MyHandle && GetPluginStatus(ExiVar_Plugin) == Plugin_Running && (ExiVar_Function = GetFunctionByName(ExiVar_Plugin, "ExiStats_OnDBConnected")) != INVALID_FUNCTION)
+		{
+			Call_StartFunction(ExiVar_Plugin, ExiVar_Function);
+			Call_PushCell(CloneHandle(ExiDB, ExiVar_Plugin));
+			Call_PushCell(ExiDB_type);
+			Call_Finish();
+		}
+	}
+
+	delete ExiVar_Iterator;
 }
 
 // PLAYER
@@ -184,7 +196,7 @@ void ExiDB_SetValues(ExiPlayer_Info param, int client, int value)
 		return;
 	}
 
-	Format(query, 256, UPDATEPLAYERVALUE, query, value, ExiPlayer[client][EP_Id]);
+	Format(query, 256, UPDATEPLAYERVALUE, query, value, ExiPlayer[client][param]);
 
 	ExiDB_TQueryEx(query, _, param);
 }
@@ -197,16 +209,17 @@ void ExiDB_SetString(ExiPlayer_Info param, int client, const char[] value)
 		return;
 	}
 
-	Format(query, 256, UPDATEPLAYERVALUE, query, value, ExiPlayer[client][EP_Id]);
+	Format(query, 256, UPDATEPLAYERSTRING, query, value, ExiPlayer[client][param]);
 
 	ExiDB_TQueryEx(query, _, param);
 }
 
 void ExiDB_UpdateAllValues(int client)
 {
-	char query[256];
+	char query[256], client_name[MAX_NAME_LENGTH * 2 + 1];
+	ExiDB.Escape(ExiPlayer[client][EP_Name], client_name, MAX_NAME_LENGTH * 2 + 1);
 
-	FormatEx(query, 256, UPDATEALLPLAYERVALUE, ExiPlayer[client][EP_Exp], (ExiPlayer[client][EP_GameTime] -= ExiPlayer[client][EP_StartGameTime] - (ExiPlayer[client][EP_StartGameTime] = GetTime())), (ExiPlayer[client][EP_LastVisit] = GetTime()), ExiPlayer[client][EP_Id]);
+	FormatEx(query, 256, UPDATEALLPLAYERVALUE, client_name, ExiPlayer[client][EP_Exp], (ExiPlayer[client][EP_GameTime] -= ExiPlayer[client][EP_StartGameTime] - (ExiPlayer[client][EP_StartGameTime] = GetTime())), (ExiPlayer[client][EP_LastVisit] = GetTime()), ExiPlayer[client][EP_Id]);
 
 	ExiDB_TQueryEx(query);
 }
@@ -246,6 +259,7 @@ bool ExiDB_GetColNameByParam(ExiPlayer_Info param, char[] buffer, int maxlen)
 	switch (param)
 	{
 		case EP_Id:			strcopy(buffer, maxlen, "id");
+		case EP_Name:		strcopy(buffer, maxlen, "name");
 		case EP_Auth:		strcopy(buffer, maxlen, "auth");
 		case EP_Exp:		strcopy(buffer, maxlen, "exp");
 		case EP_GameTime:	strcopy(buffer, maxlen, "time");
