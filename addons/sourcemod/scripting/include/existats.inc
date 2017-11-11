@@ -61,17 +61,17 @@ native ExiStatsDB_Type ExiStats_GetDatabaseType();
 native void ExiStats_Message(int client, const char[] format, any ...);
 native void ExiStats_MessageAll(const char[] format, any ...);
 
-native int ExiStats_GetClientId(int client);
-native int ExiStats_GetClientAuth(int client, char[] auth, int maxlength);
-native int ExiStats_GetClientName(int client, char[] name, int maxlength);
-
 native int ExiStats_GetClientById(int id);
 native int ExiStats_GetClientByAuth(const char[] auth);
-
 
 native bool ExiStats_SetClientExperience(int client, int value, bool immediately = false);
 native bool ExiStats_SetClientGameTime(int client, bool immediately = false);
 native bool ExiStats_SetClientLastVisit(int client, bool immediately = false);
+
+native int ExiStats_GetClientId(int client);
+
+native int ExiStats_GetClientAuth(int client, char[] auth, int maxlength);
+native int ExiStats_GetClientName(int client, char[] name, int maxlength);
 
 native int ExiStats_GetClientExperience(int client);
 native int ExiStats_GetClientGameTime(int client);
