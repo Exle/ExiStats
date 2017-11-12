@@ -1,3 +1,36 @@
+/**
+ * =============================================================================
+ * [ExiStats] Core
+ * Fully modular statistics for game server.
+ *
+ * File: existats/db.sp
+ * Role: Work with database.
+ * =============================================================================
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, version 3.0, as published by the
+ * Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * As a special exception, AlliedModders LLC gives you permission to link the
+ * code of this program (as well as its derivative works) to "Half-Life 2," the
+ * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
+ * by the Valve Corporation.  You must obey the GNU General Public License in
+ * all respects for all other code used.  Additionally, AlliedModders LLC grants
+ * this exception to all derivative works.  AlliedModders LLC defines further
+ * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
+ * or <http://www.sourcemod.net/license.php>.
+ *
+ * Version: $Id$
+ */
+
 Database ExiDB;
 ExiStatsDBType ExiDB_type;
 
@@ -201,22 +234,15 @@ public void ExiDB_ClientAuthorizedInsert(Database db, DBResultSet results, const
 void ExiDB_SetValues(ExiPlayer_Info param, int client, int value)
 {
 	char query[256];
-	if (!ExiDB_GetColNameByParam(param, query, 256))
-	{
-		return;
-	}
-
+	ExiDB_GetColNameByParam(param, query, 256);
 	Format(query, 256, UPDATEPLAYERVALUE, query, value, ExiPlayer[client][EP_Id]);
-
 	ExiDB_TQueryEx(query, _, 001);
 }
 
 void ExiDB_SetString(const char[] colname, int client, const char[] value)
 {
 	char query[256];
-
 	FormatEx(query, 256, UPDATEPLAYERSTRING, colname, value, ExiPlayer[client][EP_Id]);
-
 	ExiDB_TQueryEx(query, _, 002);
 }
 
@@ -258,12 +284,13 @@ public void ExiDB_ErrorCheck(Database db, DBResultSet results, const char[] erro
 	{
 		Exi_State(false);
 		CreateTimer(10.0, ExiDB_ReconnectTimer);
+		LogError("[DB] Query Error: Database INVALID HANDLE");
 	}
 
 	LogError("[DB] Query Check Error: data %d | %s", data, error);
 }
 
-bool ExiDB_GetColNameByParam(ExiPlayer_Info param, char[] buffer, int maxlen)
+void ExiDB_GetColNameByParam(ExiPlayer_Info param, char[] buffer, int maxlen)
 {
 	switch (param)
 	{
@@ -271,8 +298,5 @@ bool ExiDB_GetColNameByParam(ExiPlayer_Info param, char[] buffer, int maxlen)
 		case EP_Exp:		strcopy(buffer, maxlen, "exp");
 		case EP_GameTime:	strcopy(buffer, maxlen, "time");
 		case EP_LastVisit:	strcopy(buffer, maxlen, "lastvisit");
-		default: return false;
 	}
-
-	return true;
 }

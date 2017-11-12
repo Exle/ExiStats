@@ -1,3 +1,36 @@
+/**
+ * =============================================================================
+ * [ExiStats] Core
+ * Fully modular statistics for game server.
+ *
+ * File: existats.sp
+ * Role: -
+ * =============================================================================
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, version 3.0, as published by the
+ * Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * As a special exception, AlliedModders LLC gives you permission to link the
+ * code of this program (as well as its derivative works) to "Half-Life 2," the
+ * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
+ * by the Valve Corporation.  You must obey the GNU General Public License in
+ * all respects for all other code used.  Additionally, AlliedModders LLC grants
+ * this exception to all derivative works.  AlliedModders LLC defines further
+ * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
+ * or <http://www.sourcemod.net/license.php>.
+ *
+ * Version: $Id$
+ */
+
 #include <sourcemod>
 #include <existats>
 
@@ -29,9 +62,7 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	ExiNative_AskPluginLoad2();
-
 	RegPluginLibrary("existats");
-
 	return APLRes_Success;
 }
 
@@ -55,20 +86,4 @@ public void OnPluginEnd()
 	ExiDB_OnPluginEnd();
 	ExiPlayer_OnPluginEnd();
 	//ExiMenu_OnPluginEnd();
-}
-
-void Exi_State(bool start = true)
-{
-	if ((ExiVar_Started = start))
-	{
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (!IsClientInGame(i))
-			{
-				continue;
-			}
-
-			OnClientAuthorized(i, "");
-		}
-	}
 }
