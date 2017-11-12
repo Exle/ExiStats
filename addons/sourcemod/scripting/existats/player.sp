@@ -1,10 +1,6 @@
-#include <sourcemod>
-
 enum ExiPlayer_Info
 {
 	EP_Id,
-	String:EP_Name[MAX_NAME_LENGTH],
-	String:EP_Auth[32],
 	EP_Exp,
 	EP_GameTime,
 	EP_LastVisit,
@@ -16,6 +12,22 @@ any ExiPlayer[MAXPLAYERS + 1][ExiPlayer_Info];
 Handle	ExiForward_OnClienInfoReceived,
 		ExiForward_OnClienExperienceUpdated,
 		ExiForward_OnClienNameUpdated;
+
+void ExiPlayer_CreateNative()
+{
+	CreateNative("ExiStats_GetClientId",			ExiNative_GetClientId);
+
+	CreateNative("ExiStats_GetClientById",			ExiNative_GetClientById);
+	CreateNative("ExiStats_GetClientByAuth",		ExiNative_GetClientByAuth);
+
+	CreateNative("ExiStats_SetClientExperience",	ExiNative_SetClientExperience);
+	CreateNative("ExiStats_SetClientGameTime",		ExiNative_SetClientGameTime);
+	CreateNative("ExiStats_SetClientLastVisit",		ExiNative_SetClientLastVisit);
+
+	CreateNative("ExiStats_GetClientExperience",	ExiNative_GetClientExperience);
+	CreateNative("ExiStats_GetClientGameTime",		ExiNative_GetClientGameTime);
+	CreateNative("ExiStats_GetClientLastVisit",		ExiNative_GetClientLastVisit);
+}
 
 void ExiPlayer_OnPluginStart()
 {
@@ -40,10 +52,7 @@ public void OnClientAuthorized(int client, const char[] auth)
 		return;
 	}
 
-	GetClientName(client, ExiPlayer[client][EP_Name], MAX_NAME_LENGTH);
-	GetClientAuthId(client, AuthId_Steam3, ExiPlayer[client][EP_Auth], 32);
-
-	ExiDB_OnClientAuthorized(client, ExiPlayer[client][EP_Auth]);
+	ExiDB_OnClientAuthorized(client);
 }
 
 public void OnClientDisconnect(int client)
@@ -63,7 +72,6 @@ void ExiPlayer_OnClienInfoReceived(int client)
 	Call_StartForward(ExiForward_OnClienInfoReceived);
 	Call_PushCell(client);
 	Call_PushCell(ExiPlayer[client][EP_Id]);
-	Call_PushString(ExiPlayer[client][EP_Auth]);
 	Call_PushCell(ExiPlayer[client][EP_Exp]);
 	Call_PushCell(ExiPlayer[client][EP_GameTime]);
 	Call_PushCell(ExiPlayer[client][EP_LastVisit]);
@@ -87,9 +95,10 @@ int ExiPlayer_GetClientById(int id)
 
 int ExiPlayer_GetClientByAuth(const char[] auth)
 {
+	char client_auth[32];
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!IsClientInGame(i) || IsFakeClient(i) || strcmp(auth, ExiPlayer[i][EP_Auth]) != 0)
+		if (!IsClientInGame(i) || IsFakeClient(i) || GetClientAuthId(i, AuthId_Steam3, client_auth, 32) && strcmp(auth, client_auth) != 0)
 		{
 			continue;
 		}
@@ -112,7 +121,7 @@ bool ExiPlayer_SetValues(ExiPlayer_Info param, int client, int value, bool immed
 	{
 		Call_StartForward(ExiForward_OnClienExperienceUpdated);
 		Call_PushCell(client);
-		Call_PushCell(ExiPlayer[client][param]);
+		Call_PushCell(ExiPlayer[client][EP_Exp]);
 		Call_PushCellRef(value);
 		Call_Finish();
 	}
@@ -127,24 +136,22 @@ bool ExiPlayer_SetValues(ExiPlayer_Info param, int client, int value, bool immed
 	return true;
 }
 
-bool ExiPlayer_SetName(int client, const char[] value, bool immediately = false)
+bool ExiPlayer_SetName(int client, const char[] oldname, const char[] newname, bool immediately = false)
 {
 	if (!(0 < client < MaxClients) || !IsClientInGame(client) || IsFakeClient(client))
 	{
 		return false;
 	}
 
-	Call_StartForward(ExiForward_OnClienNameUpdated);
-	Call_PushCell(client);
-	Call_PushString(ExiPlayer[client][EP_Name]);
-	Call_PushString(value);
-	Call_Finish();
-
-	strcopy(ExiPlayer[client][EP_Name], MAX_NAME_LENGTH, value);
-
 	if ((!ExiVar_Update || immediately) && ExiVar_Started)
 	{
-		ExiDB_SetString(EP_Name, client, ExiPlayer[client][EP_Name]);
+		Call_StartForward(ExiForward_OnClienNameUpdated);
+		Call_PushCell(client);
+		Call_PushString(oldname);
+		Call_PushString(newname);
+		Call_Finish();
+
+		ExiDB_SetString("name", client, newname);
 	}
 
 	return true;
@@ -159,24 +166,4 @@ int ExiPlayer_GetValues(ExiPlayer_Info param, int client)
 	}
 
 	return ExiPlayer[client][param];
-}
-
-int ExiPlayer_GetString(ExiPlayer_Info param, int client, char[] buffer, int maxlength)
-{
-	if (!(0 < client < MaxClients) || !IsClientInGame(client) || IsFakeClient(client) || !ExiVar_Started)
-	{
-		return -1;
-	}
-
-	int cells;
-	if (param == EP_Name)
-	{
-		cells = strcopy(buffer, maxlength, ExiPlayer[client][EP_Name]);
-	}
-	else
-	{
-		cells = strcopy(buffer, maxlength, ExiPlayer[client][EP_Auth]);
-	}
-
-	return cells;
 }

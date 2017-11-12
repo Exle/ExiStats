@@ -1,6 +1,10 @@
-#include <sourcemod>
-
 #define MAX_BUFFER_LENGTH	(256 * 4)
+
+void ExiFunction_CreateNative()
+{
+	CreateNative("ExiStats_Message",	ExiNative_Message);
+	CreateNative("ExiStats_MessageAll",	ExiNative_MessageAll);
+}
 
 stock void ExiFunction_ChatMessage(int client, const char[] format, any ...)
 {
@@ -35,7 +39,7 @@ stock void ExiFunction_ChatMessageAll(const char[] format, any ...)
 	}
 }
 
-stock void ExiFunction_SendMessage(int client, char[] message, int author = 0)
+void ExiFunction_SendMessage(int client, char[] message, int author = 0)
 {
 	if (author == 0)
 	{

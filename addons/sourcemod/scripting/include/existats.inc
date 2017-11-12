@@ -10,11 +10,29 @@
 /**
  *	Database type
  */
-enum ExiStatsDB_Type
+enum ExiStatsDBType
 {
 	ESDB_SQLite, 	/**< SQLite type */
 	ESDB_MySQL,		/**< MySQL type */
 };
+
+/**
+ *	Menu type
+ */
+enum ExiStatsMenuType
+{
+    ESMT_Admin,
+    ESMT_Client
+}
+
+/**
+ *	Menu type
+ */
+enum ExiStatsMenuItemType
+{
+    ESMIT_Category,
+    ESMIT_Item
+}
 
 /**
  *	Called when plugin started and database connected
@@ -23,7 +41,7 @@ enum ExiStatsDB_Type
  *	@param type	Database type (mysql or sql)
  *
  */
-forward void ExiStats_OnDBConnected(Database db, ExiStatsDB_Type type);
+forward void ExiStats_OnDBConnected(Database db, ExiStatsDBType type);
 
 /**
  *	Called when the connection error to the database and retry the connection
@@ -56,7 +74,7 @@ forward void ExiStats_OnClienExperienceUpdated(int client, int exp, int &newexp)
 native bool ExiStats_Started();
 
 native Database ExiStats_GetDatabase();
-native ExiStatsDB_Type ExiStats_GetDatabaseType();
+native ExiStatsDBType ExiStats_GetDatabaseType();
 
 native void ExiStats_Message(int client, const char[] format, any ...);
 native void ExiStats_MessageAll(const char[] format, any ...);
@@ -69,9 +87,6 @@ native bool ExiStats_SetClientGameTime(int client, bool immediately = false);
 native bool ExiStats_SetClientLastVisit(int client, bool immediately = false);
 
 native int ExiStats_GetClientId(int client);
-
-native int ExiStats_GetClientAuth(int client, char[] auth, int maxlength);
-native int ExiStats_GetClientName(int client, char[] name, int maxlength);
 
 native int ExiStats_GetClientExperience(int client);
 native int ExiStats_GetClientGameTime(int client);

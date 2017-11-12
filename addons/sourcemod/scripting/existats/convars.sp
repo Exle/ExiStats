@@ -1,5 +1,3 @@
-#include <sourcemod>
-
 ConVar ExiCVar_Update;
 
 int ExiVar_Update;

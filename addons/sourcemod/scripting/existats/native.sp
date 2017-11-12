@@ -1,48 +1,26 @@
-//#include <sourcemod>
-
 void ExiNative_AskPluginLoad2()
 {
-	CreateNative("ExiStats_Started",				ExiNative_Started);
+	CreateNative("ExiStats_Started",		ExiNative_Started);
+	CreateNative("ExiStats_UnRegisterMe",	ExiNative_UnRegisterMe);
 
-	CreateNative("ExiStats_GetDatabase",			ExiNative_GetDatabase);
-	CreateNative("ExiStats_GetDatabaseType",		ExiNative_GetDatabaseType);
-
-	CreateNative("ExiStats_Message",				ExiNative_Message);
-	CreateNative("ExiStats_MessageAll",				ExiNative_MessageAll);
-
-	CreateNative("ExiStats_GetClientId",			ExiNative_GetClientId);
-	CreateNative("ExiStats_GetClientAuth",			ExiNative_GetClientAuth);
-	CreateNative("ExiStats_GetClientName",			ExiNative_GetClientName);
-
-	CreateNative("ExiStats_GetClientById",			ExiNative_GetClientById);
-	CreateNative("ExiStats_GetClientByAuth",		ExiNative_GetClientByAuth);
-
-	CreateNative("ExiStats_SetClientExperience",	ExiNative_SetClientExperience);
-	CreateNative("ExiStats_SetClientGameTime",		ExiNative_SetClientGameTime);
-	CreateNative("ExiStats_SetClientLastVisit",		ExiNative_SetClientLastVisit);
-
-	CreateNative("ExiStats_GetClientExperience",	ExiNative_GetClientExperience);
-	CreateNative("ExiStats_GetClientGameTime",		ExiNative_GetClientGameTime);
-	CreateNative("ExiStats_GetClientLastVisit",		ExiNative_GetClientLastVisit);
-
-	//CreateNative("ExiStats_ReDisplayAdminMenu",		ExiNative_ReDisplayAdminMenu);
-	//CreateNative("ExiStats_ReDisplayClientMenu",	ExiNative_ReDisplayClientMenu);
-
-	//CreateNative("ExiStats_AddToAdminMenu",			ExiNative_AddToAdminMenu);
-	//CreateNative("ExiStats_AddToClientMenu",		ExiNative_AddToClientMenu);
-
-	//CreateNative("ExiStats_AddedToAdminMenu",		ExiNative_AddedToAdminMenu);
-	//CreateNative("ExiStats_AddedToClientMenu",		ExiNative_AddedToClientMenu);
-
-	//CreateNative("ExiStats_UnRegisterMe",			ExiNative_UnRegisterMe);
+	ExiDB_CreateNative();
+	ExiFunction_CreateNative();
+	ExiPlayer_CreateNative();
+	//ExiMenu_CreateNative();
 }
 
-// Main
+// Exi_
 public int ExiNative_Started(Handle plugin, int numParams)
 {
 	return ExiVar_Started;
 }
 
+public int ExiNative_UnRegisterMe(Handle plugin, int numParams)
+{
+	return ExiVar_Started;
+}
+
+// ExiDB_
 public int ExiNative_GetDatabase(Handle plugin, int numParams)
 {
 	return view_as<int>(CloneHandle(ExiDB, plugin));
@@ -53,7 +31,7 @@ public int ExiNative_GetDatabaseType(Handle plugin, int numParams)
 	return view_as<int>(ExiDB_type);
 }
 
-// Messages
+// ExiFunction
 public int ExiNative_Message(Handle plugin, int numParams)
 {
 	int client = GetNativeCell(1);
@@ -92,7 +70,7 @@ public int ExiNative_MessageAll(Handle plugin, int numParams)
 	}
 }
 
-// OTHER
+// ExiPlayer
 public int ExiNative_GetClientById(Handle plugin, int numParams)
 {
 	return ExiPlayer_GetClientById(GetNativeCell(1));
@@ -105,7 +83,6 @@ public int ExiNative_GetClientByAuth(Handle plugin, int numParams)
 	return ExiPlayer_GetClientByAuth(buffer);
 }
 
-// SET
 public int ExiNative_SetClientExperience(Handle plugin, int numParams)
 {
 	return view_as<int>(ExiPlayer_SetValues(EP_Exp, GetNativeCell(1), GetNativeCell(2), GetNativeCell(3)));
@@ -122,30 +99,9 @@ public int ExiNative_SetClientLastVisit(Handle plugin, int numParams)
 	return view_as<int>(ExiPlayer_SetValues(EP_LastVisit, GetNativeCell(1), GetTime(), GetNativeCell(2)));
 }
 
-// GET
 public int ExiNative_GetClientId(Handle plugin, int numParams)
 {
 	return ExiPlayer_GetValues(EP_Id, GetNativeCell(1));
-}
-
-public int ExiNative_GetClientAuth(Handle plugin, int numParams)
-{
-	char buffer[32];
-	int cells = ExiPlayer_GetString(EP_Auth, GetNativeCell(1), buffer, 32);
-
-	SetNativeString(2, buffer, GetNativeCell(3));
-
-	return cells;
-}
-
-public int ExiNative_GetClientName(Handle plugin, int numParams)
-{
-	char buffer[32];
-	int cells = ExiPlayer_GetString(EP_Name, GetNativeCell(1), buffer, 32);
-
-	SetNativeString(2, buffer, GetNativeCell(3));
-
-	return cells;
 }
 
 public int ExiNative_GetClientExperience(Handle plugin, int numParams)
@@ -162,3 +118,32 @@ public int ExiNative_GetClientLastVisit(Handle plugin, int numParams)
 {
 	return ExiPlayer_GetValues(EP_LastVisit, GetNativeCell(1));
 }
+
+// ExiMenu
+/*public int ExiNative_AddMenuItem(Handle plugin, int numParams)
+{
+	// ExiStats_AddMenuItem(ExiStatsMenuType type, ExiStatsMenuItemType itemtype, const char[] name, Display);
+
+	ExiStatsMenuType type = GetNativeCell(1);
+
+	char buffer[64];
+	GetNativeString(3, buffer, 64);
+
+	if (!buffer[0])
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "Empty name", buffer);
+		return false;
+	}
+	else if (FindInMenu(type, itemtype, buffer))
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "%s \'%s\' already registered", type == ESMIT_Category ? "category" : "item", buffer);
+		return false;
+	}
+
+	DataPack dp = new DataPack();
+	dp.WriteCell(plugin);
+	dp.WriteCell(GetNativeCell(1));
+	dp.WriteCell(GetNativeCell(2));
+	dp.WriteFunction(GetNativeCell(4));
+	dp.WriteFunction(GetNativeCell(5));
+}*/

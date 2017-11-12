@@ -15,6 +15,7 @@ EngineVersion ExiEngine;
 #include "existats/commands.sp"
 #include "existats/native.sp"
 #include "existats/events.sp"
+//#include "existats/menu.sp"
 
 public Plugin myinfo =
 {
@@ -44,6 +45,7 @@ public void OnPluginStart()
 	ExiCmd_OnPluginStart();
 	ExiPlayer_OnPluginStart();
 	ExiEvent_OnPluginStart();
+	//ExiMenu_OnPluginStart();
 
 	ExiEngine = GetEngineVersion();
 }
@@ -52,6 +54,7 @@ public void OnPluginEnd()
 {
 	ExiDB_OnPluginEnd();
 	ExiPlayer_OnPluginEnd();
+	//ExiMenu_OnPluginEnd();
 }
 
 void Exi_State(bool start = true)

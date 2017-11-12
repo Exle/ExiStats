@@ -1,5 +1,3 @@
-#include <sourcemod>
-
 void ExiEvent_OnPluginStart()
 {
 	if (!HookEventEx("player_changename", ExiEvents_OnPlayerChangeName, EventHookMode_Pre)
@@ -28,9 +26,10 @@ public void ExiEvents_OnPlayerChangeName(Event event, const char[] name, bool do
 
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
-	char buffer[MAX_NAME_LENGTH];
-	event.GetString("newname", buffer, MAX_NAME_LENGTH);
-	ExiPlayer_SetName(client, buffer);
+	char newname[MAX_NAME_LENGTH], oldname[MAX_NAME_LENGTH];
+	event.GetString("newname", newname, MAX_NAME_LENGTH);
+	event.GetString("oldname", oldname, MAX_NAME_LENGTH);
+	ExiPlayer_SetName(client, oldname, newname);
 }
 
 public void ExiEvents_OnRoundEnd(Event event, const char[] name, bool dontBroadcast)

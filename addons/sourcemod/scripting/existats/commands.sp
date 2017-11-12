@@ -1,8 +1,6 @@
-//#include <sourcemod>
-
 void ExiCmd_OnPluginStart()
 {
-	RegAdminCmd("sm_es_reset", ExiCmd_Reset, ADMFLAG_RCON, "Reset players stats");
+	RegAdminCmd("sm_es_reset", ExiCmd_Reset, ADMFLAG_ROOT, "Reset players stats");
 }
 
 public Action ExiCmd_Reset(int client, int args)
