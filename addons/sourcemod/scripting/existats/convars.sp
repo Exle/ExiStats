@@ -4,7 +4,7 @@
  * Fully modular statistics for game server.
  *
  * File: existats/convars.sp
- * Role: Registration console variables.
+ * Author: Exle / http://steamcommunity.com/profiles/76561198013509278/
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
