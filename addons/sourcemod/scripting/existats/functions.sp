@@ -39,7 +39,7 @@ void ExiFunction_CreateNative()
 	CreateNative("ExiStats_MessageAll",	ExiNative_MessageAll);
 }
 
-void Exi_State(bool start = true)
+void ExiFunction_State(bool start = true)
 {
 	if ((ExiVar_Started = start))
 	{

@@ -34,6 +34,7 @@
 enum ExiPlayer_Info
 {
 	EP_Id,
+	EP_Steam64,
 	EP_Exp,
 	EP_GameTime,
 	EP_LastVisit,
@@ -44,7 +45,8 @@ any ExiPlayer[MAXPLAYERS + 1][ExiPlayer_Info];
 
 Handle	ExiForward_OnClienInfoReceived,
 		ExiForward_OnClienExperienceUpdated,
-		ExiForward_OnClienNameUpdated;
+		ExiForward_OnClienNameUpdated,
+		ExiForward_OnClientPreReseted;
 
 void ExiPlayer_CreateNative()
 {
@@ -67,6 +69,7 @@ void ExiPlayer_OnPluginStart()
 	ExiForward_OnClienInfoReceived		= CreateGlobalForward("ExiStats_OnClienInfoReceived",		ET_Ignore, Param_Cell, Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell);
 	ExiForward_OnClienExperienceUpdated	= CreateGlobalForward("ExiStats_OnClienExperienceUpdated",	ET_Ignore, Param_Cell, Param_Cell, Param_CellByRef);
 	ExiForward_OnClienNameUpdated		= CreateGlobalForward("ExiStats_OnClienNameUpdated",		ET_Ignore, Param_Cell, Param_String, Param_String);
+	ExiForward_OnClientPreReseted		= CreateGlobalForward("ExiStats_OnClientPreReseted",		ET_Ignore, Param_Cell, Param_Cell);
 }
 
 void ExiPlayer_OnPluginEnd()
@@ -74,6 +77,7 @@ void ExiPlayer_OnPluginEnd()
 	delete ExiForward_OnClienInfoReceived;
 	delete ExiForward_OnClienExperienceUpdated;
 	delete ExiForward_OnClienNameUpdated;
+	delete ExiForward_OnClientPreReseted;
 }
 
 public void OnClientAuthorized(int client, const char[] auth)
@@ -105,33 +109,18 @@ void ExiPlayer_OnClienInfoReceived(int client)
 	Call_StartForward(ExiForward_OnClienInfoReceived);
 	Call_PushCell(client);
 	Call_PushCell(ExiPlayer[client][EP_Id]);
+	Call_PushCell(ExiPlayer[client][EP_Steam64]);
 	Call_PushCell(ExiPlayer[client][EP_Exp]);
 	Call_PushCell(ExiPlayer[client][EP_GameTime]);
 	Call_PushCell(ExiPlayer[client][EP_LastVisit]);
 	Call_Finish();
 }
 
-int ExiPlayer_GetClientById(int id)
+int ExiPlayer_GetClientBy(ExiPlayer_Info param, int id)
 {
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (!IsClientInGame(i) || IsFakeClient(i) || id != ExiPlayer[i][EP_Id])
-		{
-			continue;
-		}
-
-		return i;
-	}
-
-	return 0;
-}
-
-int ExiPlayer_GetClientByAuth(const char[] auth)
-{
-	char client_auth[32];
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (!IsClientInGame(i) || IsFakeClient(i) || GetClientAuthId(i, AuthId_Steam3, client_auth, 32) && strcmp(auth, client_auth) != 0)
+		if (!IsClientInGame(i) || IsFakeClient(i) || id != ExiPlayer[i][param])
 		{
 			continue;
 		}

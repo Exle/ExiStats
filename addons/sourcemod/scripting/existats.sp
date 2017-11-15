@@ -33,12 +33,12 @@
 
 #include <sourcemod>
 #include <existats>
+#include <adminmenu>
 
 #pragma semicolon 1
 #pragma newdecls required
 
 bool ExiVar_Started;
-
 EngineVersion ExiEngine;
 
 #include "existats/convars.sp"
@@ -46,9 +46,9 @@ EngineVersion ExiEngine;
 #include "existats/db.sp"
 #include "existats/functions.sp"
 #include "existats/commands.sp"
-#include "existats/native.sp"
 #include "existats/events.sp"
-//#include "existats/menu.sp"
+#include "existats/menu.sp"
+#include "existats/native.sp"
 
 public Plugin myinfo =
 {
@@ -76,14 +76,12 @@ public void OnPluginStart()
 	ExiCmd_OnPluginStart();
 	ExiPlayer_OnPluginStart();
 	ExiEvent_OnPluginStart();
-	//ExiMenu_OnPluginStart();
-
-	ExiEngine = GetEngineVersion();
+	ExiMenu_OnPluginStart();
 }
 
 public void OnPluginEnd()
 {
 	ExiDB_OnPluginEnd();
 	ExiPlayer_OnPluginEnd();
-	//ExiMenu_OnPluginEnd();
+	ExiMenu_OnPluginEnd();
 }

@@ -1,0 +1,51 @@
+"Phrases"
+{
+	"Reseted Target"
+	{
+		"#format"		"{1:t}"
+		"en"			"Reseted stats {1}."
+		"ru"			"Обнуление статистики у {1}."
+	}
+
+	"Reseted Himself"
+	{
+		"en"			"Your stats reseted."
+		"ru"			"Ваща статистика сброшена."
+	}
+
+	"Reset disabled"
+	{
+		"en"            "Reset stats for players disabled"
+		"ru"            "Сброс статистики для игркоов отключен"
+    }
+
+	"Admin menu"
+	{
+		"en"			"Admin menu"
+		"ru"			"Меню администратора"
+	}
+
+	"Menu empty"
+	{
+		"en"			"Statistics menu is empty"
+		"ru"			"В меню статистики ничего нет"
+	}
+
+	"Admin menu empty"
+	{
+		"en"			"Admin menu of statistics is empty"
+		"ru"			"В меню администратора статистики ничего нет"
+	}
+
+	"Reset player stats"
+	{
+		"en"			"Reset player stats"
+		"ru"			"Сбросить статистику игрока"
+	}
+
+	"Reset all stats"
+	{
+		"en"			"Reset all stats"
+		"ru"			"Сбросить всю статистику"
+	}
+}

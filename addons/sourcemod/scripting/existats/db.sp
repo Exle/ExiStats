@@ -34,15 +34,16 @@
 Database ExiDB;
 ExiStatsDBType ExiDB_type;
 
-#define TABLEPLAYERSMYSQL		"CREATE TABLE IF NOT EXISTS es_players (id int(10) NOT NULL AUTO_INCREMENT, name varchar(32) NOT NULL, ip varchar(32) NOT NULL, auth varchar(32) NOT NULL, exp int(16) NOT NULL DEFAULT 1000, time int(12) NOT NULL DEFAULT 0, lastvisit int(12) NOT NULL DEFAULT 0, PRIMARY KEY (id), UNIQUE KEY auth (auth)) ENGINE=MyISAM DEFAULT CHARSET=utf8;"
-#define TABLEPLAYERSSQL			"CREATE TABLE IF NOT EXISTS es_players (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR NOT NULL, ip VARCHAR NOT NULL, auth VARCHAR UNIQUE ON CONFLICT IGNORE, exp INTEGER NOT NULL DEFAULT 1000, time INTEGER NOT NULL DEFAULT 0, lastvisit INTEGER NOT NULL DEFAULT 0);"
+#define TABLEPLAYERSMYSQL		"CREATE TABLE IF NOT EXISTS %splayers (id int(10) NOT NULL AUTO_INCREMENT, name varchar(32) NOT NULL, ip varchar(32) NOT NULL, auth int(32) NOT NULL, exp int(16) NOT NULL DEFAULT 1000, time int(12) NOT NULL DEFAULT 0, lastvisit int(12) NOT NULL DEFAULT 0, PRIMARY KEY (id), UNIQUE KEY auth (auth)) ENGINE=MyISAM DEFAULT CHARSET=utf8;"
+#define TABLEPLAYERSSQL			"CREATE TABLE IF NOT EXISTS %splayers (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR NOT NULL, ip VARCHAR NOT NULL, auth INTEGER UNIQUE ON CONFLICT IGNORE, exp INTEGER NOT NULL DEFAULT 1000, time INTEGER NOT NULL DEFAULT 0, lastvisit INTEGER NOT NULL DEFAULT 0);"
 
-#define SELECTPLAYER			"SELECT id, exp, time, lastvisit FROM es_players WHERE auth = '%s';"
-#define INSERTPLAYER			"INSERT INTO es_players (name, ip, auth, lastvisit) VALUES ('%s', '%s', '%s', %d);"
+#define SELECTPLAYER			"SELECT id, exp, time, lastvisit FROM %splayers WHERE auth = '%s';"
+#define INSERTPLAYER			"INSERT INTO %splayers (name, ip, auth, lastvisit) VALUES ('%s', '%s', %d, %d);"
 
-#define UPDATEPLAYERVALUE		"UPDATE es_players SET '%s' = %d WHERE id = %d;"
-#define UPDATEPLAYERSTRING		"UPDATE es_players SET '%s' = '%s' WHERE id = %d;"
-#define UPDATEALLPLAYERVALUE	"UPDATE es_players SET name = '%s', ip = '%s', exp = %d, time = %d, lastvisit = %d WHERE id = %d;"
+#define UPDATEPLAYERVALUE		"UPDATE %splayers SET '%s' = %d WHERE id = %d;"
+#define UPDATEPLAYERSTRING		"UPDATE %splayers SET '%s' = '%s' WHERE id = %d;"
+#define UPDATEALLPLAYERVALUE	"UPDATE %splayers SET name = '%s', ip = '%s', exp = %d, time = %d, lastvisit = %d WHERE id = %d;"
+#define RESETALLPLAYERS			"UPDATE %splayers SET exp = %d, time = 0, lastvisit = %d;"
 
 #define MYSQL				(ExiDB_type == ESDB_MySQL)
 
@@ -52,6 +53,7 @@ void ExiDB_CreateNative()
 {
 	CreateNative("ExiStats_GetDatabase",		ExiNative_GetDatabase);
 	CreateNative("ExiStats_GetDatabaseType",	ExiNative_GetDatabaseType);
+	CreateNative("ExiStats_GetDatabasePrefix",	ExiNative_GetDatabasePrefix);
 }
 
 void ExiDB_OnPluginStart()
@@ -103,19 +105,18 @@ public void ExiDB_Connect(Database db, const char[] error, any data)
 
 	if (ExiDB == null || error[0])
 	{
-		Exi_State(false);
-
+		ExiFunction_State(false);
 		CreateTimer(10.0, ExiDB_ReconnectTimer, _, TIMER_FLAG_NO_MAPCHANGE);
-
+	
 		LogError("[DB] Connect Error [data %d]: %s", data, error[0] ? error : "Database INVALID HANDLE");
 		return;
 	}
 
 	ExiDB_GetType();
-
 	ExiDB.SetCharset("utf8");
-
-	ExiDB.Query(ExiDB_Table, MYSQL ? TABLEPLAYERSMYSQL : TABLEPLAYERSSQL, _, DBPrio_High);
+	char query[512];
+	FormatEx(query, 512, MYSQL ? TABLEPLAYERSMYSQL : TABLEPLAYERSSQL, ExiVar_DBPrefix);
+	ExiDB.Query(ExiDB_Table, query, _, DBPrio_High);
 }
 
 void ExiDB_GetType()
@@ -136,14 +137,14 @@ public void ExiDB_Table(Database db, DBResultSet results, const char[] error, an
 	if (error[0])
 	{
 		ExiDB = null;
-		Exi_State(false);
+		ExiFunction_State(false);
 		CreateTimer(10.0, ExiDB_ReconnectTimer);
 
 		LogError("[DB] Table Error: %s", error);
 		return;
 	}
 
-	Exi_State();
+	ExiFunction_State();
 
 	Handle ExiVar_MyHandle = GetMyHandle();
 	Handle ExiVar_Iterator = GetPluginIterator();
@@ -167,10 +168,9 @@ public void ExiDB_Table(Database db, DBResultSet results, const char[] error, an
 // PLAYER
 void ExiDB_OnClientAuthorized(int client)
 {
-	char query[256], auth[32];
-	GetClientAuthId(client, AuthId_Steam3, auth, 32);
+	char query[256];
 
-	FormatEx(query, 256, SELECTPLAYER, auth);
+	FormatEx(query, 256, SELECTPLAYER, ExiVar_DBPrefix, ExiPlayer[client][EP_Steam64]);
 	ExiDB.Query(ExiDB_ClientAuthorized, query, GetClientUserId(client));
 }
 
@@ -180,7 +180,7 @@ public void ExiDB_ClientAuthorized(Database db, DBResultSet results, const char[
 	{
 		if (db == null)
 		{
-			Exi_State(false);
+			ExiFunction_State(false);
 			CreateTimer(10.0, ExiDB_ReconnectTimer);
 		}
 
@@ -189,6 +189,14 @@ public void ExiDB_ClientAuthorized(Database db, DBResultSet results, const char[
 	}
 
 	int client = GetClientOfUserId(data);
+	if (!IsClientInGame(client))
+	{
+		return;
+	}
+
+	char client_auth[64];
+	GetClientAuthId(client, AuthId_SteamID64, client_auth, 64);
+	ExiPlayer[client][EP_Steam64] = StringToInt(client_auth);
 
 	if (results.HasResults && results.FetchRow())
 	{
@@ -201,15 +209,13 @@ public void ExiDB_ClientAuthorized(Database db, DBResultSet results, const char[
 	}
 	else
 	{
-		char query[256], client_name[MAX_NAME_LENGTH * 2 + 1], client_ip[16], client_auth[32];
+		char query[256], client_name[MAX_NAME_LENGTH * 2 + 1], client_ip[16];
 
 		GetClientName(client, client_name, MAX_NAME_LENGTH * 2 + 1);
 		GetClientIP(client, client_ip, 16);
-		GetClientAuthId(client, AuthId_Steam3, client_auth, 32);
-
 		ExiDB.Escape(client_name, client_name, MAX_NAME_LENGTH * 2 + 1);
 
-		FormatEx(query, 256, INSERTPLAYER, client_name, client_ip, client_auth, GetTime());
+		FormatEx(query, 256, INSERTPLAYER, ExiVar_DBPrefix, client_name, client_ip, ExiPlayer[client][EP_Steam64], GetTime());
 		ExiDB.Query(ExiDB_ClientAuthorizedInsert, query, data);
 	}
 }
@@ -220,7 +226,7 @@ public void ExiDB_ClientAuthorizedInsert(Database db, DBResultSet results, const
 	{
 		if (db == null)
 		{
-			Exi_State(false);
+			ExiFunction_State(false);
 			CreateTimer(10.0, ExiDB_ReconnectTimer);
 		}
 
@@ -235,14 +241,14 @@ void ExiDB_SetValues(ExiPlayer_Info param, int client, int value)
 {
 	char query[256];
 	ExiDB_GetColNameByParam(param, query, 256);
-	Format(query, 256, UPDATEPLAYERVALUE, query, value, ExiPlayer[client][EP_Id]);
+	Format(query, 256, UPDATEPLAYERVALUE, ExiVar_DBPrefix, query, value, ExiPlayer[client][EP_Id]);
 	ExiDB_TQueryEx(query, _, 001);
 }
 
 void ExiDB_SetString(const char[] colname, int client, const char[] value)
 {
 	char query[256];
-	FormatEx(query, 256, UPDATEPLAYERSTRING, colname, value, ExiPlayer[client][EP_Id]);
+	FormatEx(query, 256, UPDATEPLAYERSTRING, ExiVar_DBPrefix, colname, value, ExiPlayer[client][EP_Id]);
 	ExiDB_TQueryEx(query, _, 002);
 }
 
@@ -254,16 +260,24 @@ void ExiDB_UpdateAllValues(int client)
 	GetClientIP(client, client_ip, 16);
 	ExiDB.Escape(client_name, client_name, MAX_NAME_LENGTH * 2 + 1);
 
-	FormatEx(query, 256, UPDATEALLPLAYERVALUE, client_name, client_ip, ExiPlayer[client][EP_Exp], (ExiPlayer[client][EP_GameTime] -= ExiPlayer[client][EP_StartGameTime] - (ExiPlayer[client][EP_StartGameTime] = GetTime())), (ExiPlayer[client][EP_LastVisit] = GetTime()), ExiPlayer[client][EP_Id]);
+	FormatEx(query, 256, UPDATEALLPLAYERVALUE, ExiVar_DBPrefix, client_name, client_ip, ExiPlayer[client][EP_Exp], (ExiPlayer[client][EP_GameTime] -= ExiPlayer[client][EP_StartGameTime] - (ExiPlayer[client][EP_StartGameTime] = GetTime())), (ExiPlayer[client][EP_LastVisit] = GetTime()), ExiPlayer[client][EP_Id]);
 
 	ExiDB_TQueryEx(query, _, 003);
+}
+
+void ExiDB_ResetAll()
+{
+	char query[256];
+	FormatEx(query, 256, RESETALLPLAYERS, ExiVar_DBPrefix, 1000, GetTime());
+	ExiDB_TQueryEx(query, _, 004);
+	ExiFunction_State();
 }
 
 stock void ExiDB_TQueryEx(const char[] query, DBPriority prio = DBPrio_Normal, any data = 0)
 {
 	if (ExiDB == null)
 	{
-		Exi_State(false);
+		ExiFunction_State(false);
 		CreateTimer(10.0, ExiDB_ReconnectTimer);
 		LogError("[DB] Query Error: Database INVALID HANDLE");
 
@@ -282,7 +296,7 @@ public void ExiDB_ErrorCheck(Database db, DBResultSet results, const char[] erro
 
 	if (db == null)
 	{
-		Exi_State(false);
+		ExiFunction_State(false);
 		CreateTimer(10.0, ExiDB_ReconnectTimer);
 		LogError("[DB] Query Error: Database INVALID HANDLE");
 	}

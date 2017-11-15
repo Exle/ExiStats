@@ -49,24 +49,6 @@ enum ExiStatsDBType
 };
 
 /**
- *	Menu type
- */
-enum ExiStatsMenuType
-{
-    ESMT_Admin,
-    ESMT_Client
-}
-
-/**
- *	Menu type
- */
-enum ExiStatsMenuItemType
-{
-    ESMIT_Category,
-    ESMIT_Item
-}
-
-/**
  *	Called when plugin started and database connected
  *
  *	@param db	Database handle
@@ -77,6 +59,7 @@ forward void ExiStats_OnDBConnected(Database db, ExiStatsDBType type);
 
 /**
  *	Called when the connection error to the database and retry the connection
+ *
  */
 forward void ExiStats_OnDBReConnect();
 
@@ -85,13 +68,13 @@ forward void ExiStats_OnDBReConnect();
  *
  *	@param client		Client index
  *	@param id			Client id in database
- *	@param auth			Client auth id
+ *	@param steam64		Client steamid64
  *	@param exp			Client experience
  *	@param gameTime		The time spent on the server
  *	@param lastvisit	Last entry to the server
  *
  */
-forward void ExiStats_OnClienInfoReceived(int client, int id, const char[] auth, int exp, int gameTime, int lastvisit);
+forward void ExiStats_OnClienInfoReceived(int client, int id, int steam64, int exp, int gameTime, int lastvisit);
 
 /**
  *	Called when the player experience updated
@@ -103,16 +86,36 @@ forward void ExiStats_OnClienInfoReceived(int client, int id, const char[] auth,
  */
 forward void ExiStats_OnClienExperienceUpdated(int client, int exp, int &newexp);
 
+/**
+ *	Called when client change name and this now updating in db
+ *
+ *	@param client		Client index
+ *	@param oldname		Old name
+ *	@param newname		New name
+ *
+ */
+forward void ExiStats_OnClienNameUpdated(int client, const char[] oldname, const char[] newname);
+
+/**
+ *	Called when target want to reset
+ *
+ *	@param client		Initiator of reset target
+ *	@param target		Who will be reseted
+ *
+ */
+forward void ExiStats_OnClientPreReset(int client, int target);
+
 native bool ExiStats_Started();
 
 native Database ExiStats_GetDatabase();
 native ExiStatsDBType ExiStats_GetDatabaseType();
+native void ExiStats_GetDatabasePrefix(char[] prefix, int maxlength);
 
 native void ExiStats_Message(int client, const char[] format, any ...);
 native void ExiStats_MessageAll(const char[] format, any ...);
 
 native int ExiStats_GetClientById(int id);
-native int ExiStats_GetClientByAuth(const char[] auth);
+native int ExiStats_GetClientByAuth(int steamid64);
 
 native bool ExiStats_SetClientExperience(int client, int value, bool immediately = false);
 native bool ExiStats_SetClientGameTime(int client, bool immediately = false);

@@ -31,24 +31,41 @@
  * Version: $Id$
  */
 
-ConVar ExiCVar_Update;
+ConVar ExiCVar_DBPrefix,
+	ExiCVar_Update,
+	ExiCvar_Reset;
 
-int ExiVar_Update;
+char ExiVar_DBPrefix[16];
+
+int ExiVar_Update,
+	ExiVar_Reset;
 
 void ExiConVar_OnPluginStart()
 {
-	(ExiCVar_Update = CreateConVar("sm_es_update", "2", "How often update database. 0 - immediately, 1,2,3.. - Every N rounds")).AddChangeHook(ExiConVar_ChangedCallback);
+	(ExiCVar_DBPrefix = CreateConVar("sm_es_dbprefix", "es_", "Database prefix")).AddChangeHook(ExiConVar_ChangedCallback);
+	(ExiCVar_Update = CreateConVar("sm_es_update", "2", "How often update database. 0 - immediately, 1,2,3.. - Every N rounds", _, true, 0.0)).AddChangeHook(ExiConVar_ChangedCallback);
+	(ExiCvar_Reset = CreateConVar("sm_es_clientreset", "1", "Allow players to reset statistics. 0 - off / 1 - on", _, true, 0.0, true, 1.0)).AddChangeHook(ExiConVar_ChangedCallback);
 }
 
 public void OnConfigsExecuted()
 {
+	ExiConVar_ChangedCallback(ExiCVar_DBPrefix, "", "");
 	ExiConVar_ChangedCallback(ExiCVar_Update, "", "");
+	ExiConVar_ChangedCallback(ExiCvar_Reset, "", "");
 }
 
 public void ExiConVar_ChangedCallback(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar == ExiCVar_Update)
+	if (convar == ExiCVar_DBPrefix)
+	{
+		strcopy(ExiVar_DBPrefix, 16, newValue[0] ? newValue : "es_");
+	}
+	else if (convar == ExiCVar_Update)
 	{
 		ExiVar_Update = convar.IntValue;
+	}
+	else if (convar == ExiCvar_Reset)
+	{
+		ExiVar_Reset = convar.BoolValue;
 	}
 }

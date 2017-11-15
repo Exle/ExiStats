@@ -39,7 +39,7 @@ void ExiNative_AskPluginLoad2()
 	ExiDB_CreateNative();
 	ExiFunction_CreateNative();
 	ExiPlayer_CreateNative();
-	//ExiMenu_CreateNative();
+	ExiMenu_CreateNative();
 }
 
 // Exi_
@@ -53,7 +53,7 @@ public int ExiNative_UnRegisterMe(Handle plugin, int numParams)
 	return ExiVar_Started;
 }
 
-// ExiDB_
+// ExiDB
 public int ExiNative_GetDatabase(Handle plugin, int numParams)
 {
 	return view_as<int>(CloneHandle(ExiDB, plugin));
@@ -62,6 +62,11 @@ public int ExiNative_GetDatabase(Handle plugin, int numParams)
 public int ExiNative_GetDatabaseType(Handle plugin, int numParams)
 {
 	return view_as<int>(ExiDB_type);
+}
+
+public int ExiNative_GetDatabasePrefix(Handle plugin, int numParams)
+{
+	SetNativeString(1, ExiVar_DBPrefix, GetNativeCell(2));
 }
 
 // ExiFunction
@@ -106,14 +111,12 @@ public int ExiNative_MessageAll(Handle plugin, int numParams)
 // ExiPlayer
 public int ExiNative_GetClientById(Handle plugin, int numParams)
 {
-	return ExiPlayer_GetClientById(GetNativeCell(1));
+	return ExiPlayer_GetClientBy(EP_Id, GetNativeCell(1));
 }
 
 public int ExiNative_GetClientByAuth(Handle plugin, int numParams)
 {
-	char buffer[32];
-	GetNativeString(1, buffer, 32);
-	return ExiPlayer_GetClientByAuth(buffer);
+	return ExiPlayer_GetClientBy(EP_Steam64, GetNativeCell(1));
 }
 
 public int ExiNative_SetClientExperience(Handle plugin, int numParams)
@@ -153,30 +156,78 @@ public int ExiNative_GetClientLastVisit(Handle plugin, int numParams)
 }
 
 // ExiMenu
-/*public int ExiNative_AddMenuItem(Handle plugin, int numParams)
-{
-	// ExiStats_AddMenuItem(ExiStatsMenuType type, ExiStatsMenuItemType itemtype, const char[] name, Display);
+public int ExiNative_ReDisplayMenu(Handle plugin, int numParams)
+{//	ExiStats_ReDisplayMenu(int client);
+	ExiMenu_MainMenu(GetNativeCell(1));
+}
 
-	ExiStatsMenuType type = GetNativeCell(1);
+public int ExiNative_ReDisplayAdminMenu(Handle plugin, int numParams)
+{//	ExiStats_ReDisplayAdminMenu(int client);
+	ExiMenu_MainMenu(GetNativeCell(1), 1);
+}
 
+public int ExiNative_AddMenuItem(Handle plugin, int numParams)
+{// ExiStats_AddMenuItem(const char[] name, DisplayCallback disp, Callback cb);
 	char buffer[64];
-	GetNativeString(3, buffer, 64);
+	GetNativeString(1, buffer, 64); // name
 
 	if (!buffer[0])
 	{
 		ThrowNativeError(SP_ERROR_NATIVE, "Empty name", buffer);
 		return false;
 	}
-	else if (FindInMenu(type, itemtype, buffer))
+	else if (ExiMenu_FindInMenu(CLIENTMENU, buffer) != -1)
 	{
-		ThrowNativeError(SP_ERROR_NATIVE, "%s \'%s\' already registered", type == ESMIT_Category ? "category" : "item", buffer);
+		ThrowNativeError(SP_ERROR_NATIVE, "Item \'%s\' already registered", buffer);
 		return false;
 	}
 
-	DataPack dp = new DataPack();
-	dp.WriteCell(plugin);
-	dp.WriteCell(GetNativeCell(1));
-	dp.WriteCell(GetNativeCell(2));
-	dp.WriteFunction(GetNativeCell(4));
-	dp.WriteFunction(GetNativeCell(5));
-}*/
+	ExiMenu_AddMenuItem(CLIENTMENU, plugin, buffer, GetNativeFunction(2), GetNativeFunction(3));
+	return true;
+}
+
+public int ExiNative_AddAdminMenuItem(Handle plugin, int numParams)
+{// ExiStats_AddAdminMenuItem(const char[] name, DisplayCallback disp, Callback cb);
+	char buffer[64];
+	GetNativeString(1, buffer, 64); // name
+
+	if (!buffer[0])
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "Empty name", buffer);
+		return false;
+	}
+	else if (ExiMenu_FindInMenu(ADMINMENU, buffer) != -1)
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "Item \'%s\' already registered", buffer);
+		return false;
+	}
+
+	ExiMenu_AddMenuItem(ADMINMENU, plugin, buffer, GetNativeFunction(2), GetNativeFunction(3));
+	return true;
+}
+
+public int ExiNative_AddedMenuItem(Handle plugin, int numParams)
+{// ExiStats_AddedMenuItem(const char[] name);
+	char buffer[64];
+	GetNativeString(1, buffer, 64); // name
+
+	if (!buffer[0])
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Empty name", buffer);
+	}
+
+	return ExiMenu_FindInMenu(CLIENTMENU, buffer) != -1;
+}
+
+public int ExiNative_AddedAdminMenuItem(Handle plugin, int numParams)
+{// ExiStats_AddedAdminMenuItem(const char[] name);
+	char buffer[64];
+	GetNativeString(1, buffer, 64); // name
+
+	if (!buffer[0])
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Empty name", buffer);
+	}
+
+	return ExiMenu_FindInMenu(ADMINMENU, buffer) != -1;
+}

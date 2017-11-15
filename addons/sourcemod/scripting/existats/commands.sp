@@ -31,16 +31,25 @@
  * Version: $Id$
  */
 
+char ExiVar_CmdStatsMenu[][] = {
+	"sm_es", "sm_existats", "sm_stats" };
+
 void ExiCmd_OnPluginStart()
 {
-	RegAdminCmd("sm_es_reset", ExiCmd_Reset, ADMFLAG_ROOT, "Reset players stats");
+	RegAdminCmd("sm_aes_reset", ExiCmd_AdminReset, ADMFLAG_ROOT, "Reset players stats");
+	RegConsoleCmd("sm_es_reset", ExiCmd_Reset, "Reset stats");
+
+	for (int i = 0; i <= sizeof(ExiVar_CmdStatsMenu); i++)
+	{
+		RegConsoleCmd(ExiVar_CmdStatsMenu[i], ExiCmd_StatsMenu, "Open menu of statistics");
+	}
 }
 
-public Action ExiCmd_Reset(int client, int args)
+public Action ExiCmd_AdminReset(int client, int args)
 {
 	if (args < 1)
 	{
-		ReplyToCommand(client, "[SM] Usage: sm_es_reset <player>");
+		ReplyToCommand(client, "%s Usage: sm_es_reset <player>", EXICHATNAME);
 		return Plugin_Handled;
 	}
 
@@ -82,9 +91,32 @@ public Action ExiCmd_Reset(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action ExiCmd_Reset(int client, int args)
+{
+	if (!client || !IsClientInGame(client))
+	{
+		ReplyToCommand(client, "%s %t", EXICHATNAME, "Command is in-game only");
+		return Plugin_Handled;
+	}
+	else if (!ExiVar_Reset)
+	{
+		ReplyToCommand(client, "%s %t", EXICHATNAME, "Reset disabled");
+		return Plugin_Handled;
+	}
+
+	ExiCmd_PerformReset(client, client);
+
+	return Plugin_Handled;
+}
+
 void ExiCmd_PerformReset(int client, int target)
 {
-	ExiPlayer_SetValues(EP_Exp, target, 0);
+	Call_StartForward(ExiForward_OnClientPreReseted);
+	Call_PushCell(client);
+	Call_PushCell(target);
+	Call_Finish();
+
+	ExiPlayer_SetValues(EP_Exp, target, 1000);
 	ExiPlayer_SetValues(EP_GameTime, target, 0);
 
 	if (client != target)
@@ -93,7 +125,13 @@ void ExiCmd_PerformReset(int client, int target)
 	}
 	else
 	{
-		ExiFunction_ChatMessage(target, "%t", "Reseted Himself");
+		ExiFunction_ChatMessage(target, "%s %t", EXICHATNAME, "Reseted Himself");
 		LogAction(client, target, "\"%L\" Reseted himself stats", target);
 	}
+}
+
+public Action ExiCmd_StatsMenu(int client, int args)
+{
+	ExiMenu_MainMenu(client);
+	return Plugin_Handled;
 }
